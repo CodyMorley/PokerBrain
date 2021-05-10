@@ -165,180 +165,40 @@ struct TexasHoldEm {
         } else if hand1.handStrength == hand2.handStrength {
             switch hand1.handStrength {
             case .highCard:
-                for i in 4...0 {
-                    if hand1.cards.sorted(by: {$0.rank.rawValue < $1.rank.rawValue})[i].rank == hand2.cards.sorted(by: {$0.rank.rawValue < $1.rank.rawValue})[i].rank {
-                        continue
-                    } else {
-                        return hand1.cards.sorted(by: {$0.rank.rawValue < $1.rank.rawValue})[i].rank.rawValue > hand2.cards.sorted(by: {$0.rank.rawValue < $1.rank.rawValue})[i].rank.rawValue
-                    }
+                if let result = bothTwoPair(hand1, vs: hand2) {
+                    return result
                 }
             case .pair:
-                var pair1: Rank? = nil
-                var pair2: Rank? = nil
-                
-                while pair1 == nil || pair2 == nil {
-                    for card1 in 0..<hand1.cards.count - 1 {
-                        for card2 in card1 + 1..<hand1.cards.count {
-                            if hand1.cards[card1].rank == hand1.cards[card2].rank {
-                                pair1 = hand1.cards[card1].rank
-                            }
-                        }
-                    }
-                    for card1 in 0..<hand2.cards.count - 1 {
-                        for card2 in card1 + 1..<hand2.cards.count {
-                            if hand2.cards[card1].rank == hand2.cards[card2].rank {
-                                pair2 = hand2.cards[card1].rank
-                            }
-                        }
-                    }
+                if let result = bothPair(hand1, vs: hand2) {
+                    return result
                 }
-                let leftovers1 = hand1.cards.filter({$0.rank != pair1})
-                let leftovers2 = hand2.cards.filter({$0.rank != pair2})
-                let sortedLeftovers1 = leftovers1.sorted(by: {$0.rank.rawValue < $1.rank.rawValue})
-                let sortedLeftovers2 = leftovers2.sorted(by: {$0.rank.rawValue < $1.rank.rawValue})
-                
-                if let pair1 = pair1, let pair2 = pair2 {
-                    if pair1 != pair2 {
-                        return pair1.rawValue > pair2.rawValue
-                    }
-                    else {
-                        for i in 2...0 {
-                            if sortedLeftovers1[i].rank == sortedLeftovers2[i].rank {
-                                continue
-                            } else {
-                                return sortedLeftovers1[i].rank.rawValue > sortedLeftovers2[i].rank.rawValue
-                            }
-                        }
-                    }
-                }
-                
             case .twoPair:
-                let hand1Sorted = hand1.cards.sorted(by: {$0.rank.rawValue <= $1.rank.rawValue})
-                let hand2Sorted = hand2.cards.sorted(by: {$0.rank.rawValue <= $1.rank.rawValue})
-                let leftover1: Card = {
-                    for i in 0..<hand1Sorted.count - 1 {
-                        if hand1Sorted[i].rank.rawValue != hand1Sorted[i - 1].rank.rawValue && hand1Sorted[i].rank.rawValue != hand1Sorted[i + 1].rank.rawValue {
-                            return hand1Sorted[i]
-                        }
-                    }
-                }()
-                let leftover2: Card = {
-                    for i in 0..<hand2Sorted.count - 1 {
-                        if hand2Sorted[i].rank.rawValue != hand2Sorted[i - 1].rank.rawValue && hand2Sorted[i].rank.rawValue != hand2Sorted[i + 1].rank.rawValue {
-                            return hand2Sorted[i]
-                        }
-                    }
-                }()
-                var pairs1: [Card] = hand1Sorted.filter { card in
-                    card.rank != leftover1.rank
-                }
-                pairs1.sort(by: {$0.rank.rawValue <= $1.rank.rawValue})
-                var pairs2: [Card] = hand2Sorted.filter { card in
-                    card.rank != leftover2.rank
-                }
-                pairs2.sort(by: {$0.rank.rawValue <= $1.rank.rawValue})
-                
-                if let high1 = pairs1.last?.rank.rawValue, let high2 = pairs2.last?.rank.rawValue, high1 != high2 {
-                    return high1 > high2
-                } else if let low1 = pairs1.first?.rank.rawValue, let low2 = pairs2.first?.rank.rawValue, low1 != low2 {
-                    return low1 > low2
-                } else if leftover1.rank.rawValue != leftover2.rank.rawValue {
-                    return leftover1.rank.rawValue > leftover2.rank.rawValue
+                if let result = bothTwoPair(hand1, vs: hand2) {
+                    return result
                 }
             case .threeOfAKind:
-                let trips1: Rank = {
-                    for i in 1...3 {
-                        if hand1.cards[i].rank.rawValue == hand1.cards[i - 1].rank.rawValue &&
-                            hand1.cards[i].rank.rawValue == hand1.cards[i + 1].rank.rawValue {
-                            return hand1.cards[i].rank
-                        }
-                    }
-                }()
-                let trips2: Rank = {
-                    for i in 1...3 {
-                        if hand2.cards[i].rank.rawValue == hand2.cards[i - 1].rank.rawValue &&
-                            hand2.cards[i].rank.rawValue == hand2.cards[i + 1].rank.rawValue {
-                            return hand2.cards[i].rank
-                        }
-                    }
-                }()
-                var leftovers1 = hand1.cards.filter({ card in
-                    card.rank.rawValue != trips1.rawValue
-                })
-                leftovers1.sort(by: {$0.rank.rawValue >= $1.rank.rawValue} )
-                var leftovers2 = hand2.cards.filter({ card in
-                    card.rank.rawValue != trips2.rawValue
-                })
-                leftovers2.sort(by: {$0.rank.rawValue >= $1.rank.rawValue} )
-                if trips1.rawValue != trips2.rawValue {
-                    return trips1.rawValue > trips2.rawValue
-                }
-                
-                if let handOneHigh = leftovers1.last?.rank.rawValue, let handTwoHigh = leftovers2.last?.rank.rawValue, handOneHigh != handTwoHigh {
-                    return handOneHigh > handTwoHigh
-                }
-                
-                if let handOneLow = leftovers1.first?.rank.rawValue, let handTwoLow = leftovers2.first?.rank.rawValue, handOneLow != handTwoLow {
-                    return handOneLow > handTwoLow
+                if let result = bothTrips(hand1, vs: hand2) {
+                    return result
                 }
             case .straight:
-                if hand1.highCard.rawValue != hand2.highCard.rawValue {
-                    return hand1.highCard.rawValue > hand2.highCard.rawValue
+                if let result = bothStraight(hand1, vs: hand2) {
+                    return result
                 }
             case .flush:
-                if hand1.highCard.rawValue != hand2.highCard.rawValue {
-                    return hand1.highCard.rawValue > hand2.highCard.rawValue
+                if let result = bothFlush(hand1, vs: hand2) {
+                    return result
                 }
             case .fullHouse:
-                let trips1: Rank = {
-                    for i in 1...3 {
-                        if hand1.cards[i].rank.rawValue == hand1.cards[i - 1].rank.rawValue && hand1.cards[i].rank.rawValue == hand1.cards[i + 1].rank.rawValue {
-                            return hand1.cards[i].rank
-                        }
-                    }
-                }()
-                let pair1: Rank
-                let trips2: Rank
-                let pair2: Rank
-                //compare trips
-                //compare pairs
+                if let result = bothFlush(hand1, vs: hand2) {
+                    return result
+                }
             case .fourOfAKind:
-                let high1: Rank = {
-                    for i in 0..<hand1.cards.count - 1 {
-                        if hand1.cards[i].rank.rawValue != hand1.cards[i + 1].rank.rawValue {
-                            return hand1.cards[i].rank
-                        }
-                    }
-                }()
-                let quads1: Rank = {
-                    for i in 0...4 {
-                        if hand1.cards[i].rank.rawValue == hand1.cards[i + 1].rank.rawValue {
-                            return hand1.cards[i].rank
-                        }
-                    }
-                }()
-                let high2: Rank = {
-                    for i in 0..<hand2.cards.count - 1 {
-                        if hand2.cards[i].rank.rawValue != hand2.cards[i + 1].rank.rawValue {
-                            return hand2.cards[i].rank
-                        }
-                    }
-                }()
-                let quads2: Rank = {
-                    for i in 0...4 {
-                        if hand2.cards[i].rank.rawValue == hand2.cards[i + 1].rank.rawValue {
-                            return hand2.cards[i].rank
-                        }
-                    }
-                }()
-                if quads1.rawValue != quads2.rawValue {
-                    return quads1.rawValue > quads2.rawValue
-                } else if high1.rawValue != high2.rawValue {
-                    return high1.rawValue > high2.rawValue
+                if let result = bothQuads(hand1, vs: hand2) {
+                    return result
                 }
             case .straightFlush:
-                if hand1.highCard.rawValue != hand2.highCard.rawValue {
-                    return hand1.highCard.rawValue > hand2.highCard.rawValue
+                if let result = bothStraightFlush(hand1, vs: hand2) {
+                    return result
                 }
             }
         } else if hand1.handStrength.rawValue < hand2.handStrength.rawValue {
@@ -354,4 +214,286 @@ struct TexasHoldEm {
             actionOnPlayer += 1
         }
     }
+    
+    
+    // Same hand comparison logic
+    private func bothHighCard(_ hand1: Hand, vs hand2: Hand) -> Bool? {
+        guard hand1.handStrength == .highCard, hand2.handStrength == .highCard else { fatalError("Tried to pass dissimilar hands for close comparison: High Card. Hand1: \(String(describing: hand1.handStrength)) Hand2: \(String(describing: hand2.handStrength))") }
+        
+        for i in 4...0 {
+            if hand1.cards.sorted(by: {$0.rank.rawValue < $1.rank.rawValue})[i].rank == hand2.cards.sorted(by: {$0.rank.rawValue < $1.rank.rawValue})[i].rank {
+                continue
+            } else {
+                return hand1.cards.sorted(by: {$0.rank.rawValue < $1.rank.rawValue})[i].rank.rawValue > hand2.cards.sorted(by: {$0.rank.rawValue < $1.rank.rawValue})[i].rank.rawValue
+            }
+        }
+        
+        return nil
+    }
+    
+    private func bothPair(_ hand1: Hand, vs hand2: Hand) -> Bool? {
+        guard hand1.handStrength == .pair, hand2.handStrength == .pair else { fatalError("Tried to pass dissimilar hands for close comparison: Pair. Hand1: \(String(describing: hand1.handStrength)) Hand2: \(String(describing: hand2.handStrength))") }
+        let sorted1 = hand1.cards.sorted(by: {$0.rank.rawValue <= $1.rank.rawValue})
+        let sorted2 = hand2.cards.sorted(by: {$0.rank.rawValue <= $1.rank.rawValue})
+        var pairVal1 = 0
+        var pairVal2 = 0
+        var leftovers1: [Card] = []
+        var leftovers2: [Card] = []
+        
+        for i in 0..<sorted1.count {
+            var tempArr: [Card] = sorted1
+            if sorted1[i] == sorted1[i + 1] {
+                pairVal1 = sorted1[i].rank.rawValue
+                tempArr.remove(at: i + 1)
+                tempArr.remove(at: i)
+                leftovers1 = tempArr
+                break
+            }
+        }
+        
+        for i in 0..<sorted2.count {
+            var tempArr: [Card] = sorted2
+            if sorted2[i] == sorted2[i + 1] {
+                pairVal2 = sorted2[i].rank.rawValue
+                tempArr.remove(at: i + 1)
+                tempArr.remove(at: i)
+                leftovers2 = tempArr
+                break
+            }
+        }
+        leftovers1.sort(by: {$0.rank.rawValue >= $1.rank.rawValue})
+        leftovers1.sort(by: {$0.rank.rawValue >= $1.rank.rawValue})
+        
+        switch pairVal1 == pairVal2 {
+        case true:
+            break
+        default:
+            return pairVal1 > pairVal2
+        }
+        
+        for i in 0..<leftovers1.count {
+            if leftovers1[i].rank.rawValue != leftovers2[i].rank.rawValue {
+                return leftovers1[i].rank.rawValue > leftovers2[i].rank.rawValue
+            }
+        }
+        
+        return nil
+    }
+    
+    private func bothTwoPair(_ hand1: Hand, vs hand2: Hand) -> Bool? {
+        guard hand1.handStrength == .twoPair, hand2.handStrength == .twoPair else { fatalError("Tried to pass dissimilar hands for close comparison: Two Pair. Hand1: \(String(describing: hand1.handStrength)) Hand2: \(String(describing: hand2.handStrength))") }
+        
+        let sorted1 = hand1.cards.sorted(by: {$0.rank.rawValue <= $1.rank.rawValue})
+        let sorted2 = hand2.cards.sorted(by: {$0.rank.rawValue <= $1.rank.rawValue})
+        
+        var pairs1 = sorted1
+        var highcard1Rank = 0
+        for i in 0..<pairs1.count {
+            var tempArr = pairs1
+            tempArr.remove(at: i)
+            if tempArr.contains(pairs1[i]) {
+                continue
+            } else {
+                highcard1Rank = pairs1[i].rank.rawValue
+                pairs1 = tempArr
+                break
+            }
+        }
+        var pairs2 = sorted2
+        var highcard2Rank = 0
+        for i in 0..<pairs2.count {
+            var tempArr = pairs2
+            tempArr.remove(at: i)
+            if tempArr.contains(pairs2[i]) {
+                continue
+            } else {
+                highcard2Rank = pairs2[i].rank.rawValue
+                pairs2 = tempArr
+                break
+            }
+        }
+        
+        switch pairs1[3].rank.rawValue == pairs2[3].rank.rawValue {
+        case true:
+            break
+        case false:
+            return pairs1[3].rank.rawValue > pairs2[3].rank.rawValue
+        }
+        
+        switch pairs1[0].rank.rawValue == pairs2[0].rank.rawValue {
+        case true:
+            break
+        case false:
+            return pairs1[0].rank.rawValue > pairs2[0].rank.rawValue
+        }
+        
+        switch highcard1Rank == highcard2Rank {
+        case true:
+            break
+        case false:
+            return highcard1Rank > highcard2Rank
+        }
+        return nil
+    }
+    
+    private func bothTrips(_ hand1: Hand, vs hand2: Hand) -> Bool? {
+        guard hand1.handStrength == .threeOfAKind, hand2.handStrength == .threeOfAKind else { fatalError("Tried to pass dissimilar hands for close comparison: Three of a Kind. Hand1: \(String(describing: hand1.handStrength)) Hand2: \(String(describing: hand2.handStrength))") }
+        
+        let sorted1 = hand1.cards.sorted(by: {$0.rank.rawValue <= $1.rank.rawValue})
+        let sorted2 = hand2.cards.sorted(by: {$0.rank.rawValue <= $1.rank.rawValue})
+        var trips1: Rank = .two
+        var trips2: Rank = .two
+        var leftovers1: [Card] = []
+        var leftovers2: [Card] = []
+        for i in 1...3 {
+            if sorted1[i].rank.rawValue == sorted1[i - 1].rank.rawValue && sorted1[i].rank.rawValue == sorted1[i + 1].rank.rawValue {
+                trips1 = sorted1[i].rank
+                for j in 0..<sorted1.count {
+                    if sorted1[j].rank != sorted1[i].rank {
+                        leftovers1.append(sorted1[j])
+                    }
+                }
+                break
+            }
+        }
+        for i in 1...3 {
+            if sorted2[i].rank.rawValue == sorted2[i - 1].rank.rawValue && sorted2[i].rank.rawValue == sorted2[i + 1].rank.rawValue {
+                trips2 = sorted2[i].rank
+                for j in 0..<sorted2.count {
+                    if sorted2[j].rank != sorted2[i].rank {
+                        leftovers2.append(sorted2[j])
+                    }
+                }
+                break
+            }
+        }
+        
+        if trips1.rawValue != trips2.rawValue {
+            return trips1.rawValue > trips2.rawValue
+        }
+        
+        leftovers1.sort(by: {$0.rank.rawValue >= $1.rank.rawValue})
+        leftovers2.sort(by: {$0.rank.rawValue >= $1.rank.rawValue})
+        
+        for i in 0..<leftovers1.count {
+            if leftovers1[i].rank.rawValue != leftovers2[i].rank.rawValue {
+                return leftovers1[i].rank.rawValue > leftovers2[i].rank.rawValue
+            }
+        }
+        return nil
+    }
+    
+    private func bothStraight(_ hand1: Hand, vs hand2: Hand) -> Bool? {
+        guard hand1.handStrength == .straight, hand2.handStrength == .straight else { fatalError("Tried to pass dissimilar hands for close comparison: Straight. Hand1: \(String(describing: hand1.handStrength)) Hand2: \(String(describing: hand2.handStrength))") }
+        
+        if hand1.highCard.rawValue != hand2.highCard.rawValue {
+            return hand1.highCard.rawValue > hand2.highCard.rawValue
+        }
+        
+        return nil
+    }
+    
+    private func bothFlush(_ hand1: Hand, vs hand2: Hand) -> Bool? {
+        guard hand1.handStrength == .flush, hand2.handStrength == .flush else { fatalError("Tried to pass dissimilar hands for close comparison: Flush. Hand1: \(String(describing: hand1.handStrength)) Hand2: \(String(describing: hand2.handStrength))") }
+        
+        if hand1.highCard.rawValue != hand2.highCard.rawValue {
+            return hand1.highCard.rawValue > hand2.highCard.rawValue
+        }
+        
+        return nil
+    }
+    
+    private func bothFullHouse(_ hand1: Hand, vs hand2: Hand) -> Bool? {
+        guard hand1.handStrength == .fullHouse, hand2.handStrength == .fullHouse else { fatalError("Tried to pass dissimilar hands for close comparison: Full House. Hand1: \(String(describing: hand1.handStrength)) Hand2: \(String(describing: hand2.handStrength))") }
+        let sorted1 = hand1.cards.sorted(by: {$0.rank.rawValue <= $1.rank.rawValue})
+        let sorted2 = hand2.cards.sorted(by: {$0.rank.rawValue <= $1.rank.rawValue})
+        var trips1: Rank = .two
+        var pair1: Rank = .two
+        var trips2: Rank = .two
+        var pair2: Rank = .two
+        
+        for i in 1...3 {
+            if sorted1[i].rank.rawValue == sorted1[i - 1].rank.rawValue && sorted1[i].rank.rawValue == sorted1[i + 1].rank.rawValue {
+                trips1 = sorted1[i].rank
+                var tempArr = sorted1
+                for _ in 1...3 {
+                    tempArr.remove(at: i - 1)
+                }
+                pair1 = tempArr[0].rank
+            }
+        }
+        
+        for i in 1...3 {
+            if sorted2[i].rank.rawValue == sorted2[i - 1].rank.rawValue && sorted2[i].rank.rawValue == sorted2[i + 1].rank.rawValue {
+                trips2 = sorted2[i].rank
+                var tempArr = sorted2
+                for _ in 1...3 {
+                    tempArr.remove(at: i - 1)
+                }
+                pair2 = tempArr[0].rank
+            }
+        }
+        
+        
+        if trips1.rawValue != trips2.rawValue {
+            return trips1.rawValue > trips2.rawValue
+        }
+        
+        if pair1.rawValue != pair2.rawValue {
+            return pair1.rawValue > pair2.rawValue
+        }
+        
+        return nil
+    }
+    
+    
+    private func bothQuads(_ hand1: Hand, vs hand2: Hand) -> Bool? {
+        guard hand1.handStrength == .fourOfAKind, hand2.handStrength == .fourOfAKind else { fatalError("Tried to pass dissimilar hands for close comparison: Four of a Kind. Hand1: \(String(describing: hand1.handStrength)) Hand2: \(String(describing: hand2.handStrength))") }
+        let sorted1 = hand1.cards.sorted(by: {$0.rank.rawValue <= $1.rank.rawValue})
+        let sorted2 = hand2.cards.sorted(by: {$0.rank.rawValue <= $1.rank.rawValue})
+        
+        var quads1: Rank = .two
+        var quads2: Rank = .two
+        var hi1: Rank = .two
+        var hi2: Rank = .two
+        
+        switch sorted1[0].rank.rawValue == sorted1[1].rank.rawValue {
+        case true:
+            quads1 = sorted1[0].rank
+            hi1 = sorted1[4].rank
+        case false:
+            quads1 = sorted1[4].rank
+            hi1 = sorted1[0].rank
+        }
+        
+        switch sorted2[0].rank.rawValue == sorted2[1].rank.rawValue {
+        case true:
+            quads2 = sorted2[0].rank
+            hi2 = sorted2[4].rank
+        case false:
+            quads2 = sorted2[4].rank
+            hi2 = sorted2[0].rank
+        }
+        
+        if quads1.rawValue != quads2.rawValue {
+            return quads1.rawValue > quads2.rawValue
+        }
+        
+        if hi1.rawValue != hi2.rawValue {
+            return hi1.rawValue > hi2.rawValue
+        }
+        
+        return nil
+    }
+    
+    private func bothStraightFlush(_ hand1: Hand, vs hand2: Hand) -> Bool? {
+        guard hand1.handStrength == .straightFlush, hand2.handStrength == .straightFlush else { fatalError("Tried to pass dissimilar hands for close comparison: Straight Flush. Hand1: \(String(describing: hand1.handStrength)) Hand2: \(String(describing: hand2.handStrength))") }
+        
+        if hand1.highCard.rawValue != hand2.highCard.rawValue {
+            return hand1.highCard.rawValue > hand2.highCard.rawValue
+        }
+        
+        return nil
+    }
 }
+
