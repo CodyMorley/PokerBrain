@@ -66,6 +66,23 @@ struct TexasHoldEm {
         //set action on player
     }
     
+    private mutating func dealFlop() {
+        deck.deal()
+        card1 = deck.deal()
+        card2 = deck.deal()
+        card3 = deck.deal()
+    }
+    
+    private mutating func dealTurn() {
+        deck.deal()
+        card4 = deck.deal()
+    }
+    
+    private mutating func dealRiver() {
+        deck.deal()
+        card5 = deck.deal()
+    }
+    
     mutating func check() {
         nextPlayer()
     }
