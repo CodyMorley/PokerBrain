@@ -57,6 +57,8 @@ struct TexasHoldEm {
     
     
     mutating func shuffleUpAndDeal() {
+        deck.shuffle()
+        deck.shuffle()
         //TODO
         //pay small blind
         //pay big blind
@@ -129,10 +131,23 @@ struct TexasHoldEm {
             }
             roundTracker.remove(at: i)
         }
+        player.cards = [Card]()
         nextPlayer()
     }
     
-    mutating func settleRound() {
+    private mutating func nextPlayer() {
+        if playersInHand.count == 1 {
+            settleHand()
+            settleRound()
+        }
+        if actionOnPlayer + 1 > playersInHand.count {
+            actionOnPlayer = 0
+        } else {
+            actionOnPlayer += 1
+        }
+    }
+    
+    private mutating func settleRound() {
         for i in 0..<roundTracker.count {
             if let roundBet = roundTracker[i] {
                 pot += roundBet
@@ -143,20 +158,39 @@ struct TexasHoldEm {
             settleHand()
             return
         }
+        for player in players {
+            if player.stack <= 0 {
+                for i in 0..<players.count {
+                    if players[i].name == player.name {
+                        players.remove(at: i)
+                    }
+                }
+            }
+            player.cards = [Card]()
+        }
         actionOnPlayer = playersInHand.index(after: buttonOnPlayer)
     }
     
-    mutating func showdown() {
+    private mutating func showdown() {
         //TODO
         //compare all reamining hands to find best hand
         //when one hand remains settle hand
     }
     
-    mutating func settleHand() {
-        //TODO
-        //move pot to winning player
-        //move button
-        //call shuffle up and deal if 2+ players remain
+    private mutating func settleHand() {
+        showdown()
+        let split = pot / playersInHand.count
+        
+        for player in playersInHand {
+            player.stack += split
+            pot -= split
+        }
+        
+        buttonOnPlayer += 1
+        
+        if players.count > 1 {
+            shuffleUpAndDeal()
+        }
     }
     
     private func evaluate(_ hand1: Hand, vs hand2: Hand) -> Bool? {
@@ -205,14 +239,6 @@ struct TexasHoldEm {
             return false
         }
         return nil
-    }
-    
-    private mutating func nextPlayer() {
-        if actionOnPlayer + 1 > playersInHand.count {
-            actionOnPlayer = 0
-        } else {
-            actionOnPlayer += 1
-        }
     }
     
     

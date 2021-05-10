@@ -20,7 +20,7 @@ struct Player {
         }
         return nil
     }
-    var cards: [Card]?
+    var cards: [Card] = []
     
     init(playerName: String, startingStack: Double = 10000) {
         name = playerName
