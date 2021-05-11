@@ -14,8 +14,8 @@ struct Player {
     public var seat: Int
     
     // Card/Hand properties
-    var holeCards: [Card] = []
-    var communityCards: [Card] = []
+    private(set) var holeCards: [Card] = []
+    private(set) var communityCards: [Card] = []
     private var cards: [Card] {
         return holeCards + communityCards
     }
@@ -29,13 +29,14 @@ struct Player {
     // Bookkeeping properties
     var chipCount: Double { return stack }
     private var stack: Double
+    var hasButton: Bool = false
     var isActingPlayer: Bool = false
-    private(set)var isSittingOut = false
-    private(set)var isYetToAct: Bool = true
-    private(set)var isInHand: Bool = true
-    private(set)var isAllIn: Bool = false
-    private(set)var betThisRound: Double = 0
-    private(set)var chipsInPot: Double = 0
+    private(set) var isSittingOut = false
+    private(set) var isYetToAct: Bool = true
+    private(set) var isInHand: Bool = true
+    private(set) var isAllIn: Bool = false
+    private(set) var betThisRound: Double = 0
+    private(set) var chipsInPot: Double = 0
     
     
     //MARK: - Initializer -
@@ -93,18 +94,6 @@ struct Player {
         }
     }
     
-    private mutating func newHand() {
-        chipsInPot = 0
-        betThisRound = 0
-        holeCards = []
-        communityCards = []
-        
-        if chipCount > 0 {
-            isInHand = true
-            isYetToAct = true
-        }
-    }
-    
     private func playerDidTakeAction(_ action: PlayerAction) {
         // TODO use publisher to describe action to subscriber (table)
     }
@@ -123,6 +112,17 @@ struct Player {
     }
     
     //MARK: - Public Methods -
+    public mutating func newHand() {
+        chipsInPot = 0
+        betThisRound = 0
+        holeCards = []
+        communityCards = []
+        
+        if chipCount > 0 {
+            isInHand = true
+            isYetToAct = true
+        }
+    }
     
     public mutating func playerWin(_ amount: Double) {
         stack += amount
@@ -136,6 +136,25 @@ struct Player {
         } else {
             betThisRound += amount
             stack -= amount
+        }
+    }
+    
+    public mutating func dealHoleCard(_ card: Card) {
+        holeCards.append(card)
+        if holeCards.count == 2 {
+            NSLog("Starting hand: \(holeCards[0].formatted()) \(holeCards[1].formatted())")
+        }
+    }
+    
+    public mutating func dealCommunityCard(_ card: Card) {
+        communityCards.append(card)
+        if cards.count > 5, let hand = hand {
+            var currentBestHandString = ""
+            let currentHandStrength = String(describing: hand.handStrength)
+            for card in hand.cards {
+                currentBestHandString.append(card.formatted() + " ")
+            }
+            NSLog("Current best hand for \(name): \n\(currentBestHandString) \n\(currentHandStrength)")
         }
     }
     

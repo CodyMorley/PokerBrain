@@ -12,11 +12,7 @@ struct TexasHoldEm {
     var players: [Player]
     var deck: Deck
     var pot: Double = 0
-    var card1: Card? = nil
-    var card2: Card? = nil
-    var card3: Card? = nil
-    var card4: Card? = nil
-    var card5: Card? = nil
+    var communityCards: [Card] = []
     
     //stakes
     var minimumBet: Double
@@ -25,7 +21,15 @@ struct TexasHoldEm {
     }
     var ante: Double?
     //tracking gameplay
-    var buttonOnPlayer: Int
+    var buttonOnPlayer: Int! {
+        for i in 0..<players.count {
+            if players[i].hasButton {
+                return i
+            } else {
+                return 0
+            }
+        }
+    }
     var payingSmallBlind: Int { return buttonOnPlayer + 1 }
     var payingBigBlind: Int { return buttonOnPlayer + 2 }
     var actionOnPlayer: Int
