@@ -41,3 +41,10 @@ enum HandStrength: Int {
     case fourOfAKind = 7
     case straightFlush = 8
 }
+
+enum PlayerAction {
+    case check
+    case call(_ amount: Double)
+    case raise(_ amount: Double)
+    case fold
+}

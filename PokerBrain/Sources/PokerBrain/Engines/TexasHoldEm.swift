@@ -210,6 +210,8 @@ struct TexasHoldEm {
         }
     }
     
+    
+    // MARK: - HAND EVALUATION FUNCTIONS -
     private func evaluate(_ hand1: Hand, vs hand2: Hand) -> Bool? {
         if hand1.handStrength.rawValue > hand2.handStrength.rawValue {
             return true
