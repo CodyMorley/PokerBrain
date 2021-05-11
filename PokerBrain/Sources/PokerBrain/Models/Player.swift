@@ -9,7 +9,10 @@ import Foundation
 
 struct Player {
     var name: String
+    var seat: Int
     var stack: Double
+    var holeCards: [Card] = []
+    var communityCards: [Card] = []
     var hand: Hand? {
         if let cards = cards {
             if cards.count < 5 {
@@ -20,11 +23,25 @@ struct Player {
         }
         return nil
     }
-    var cards: [Card] = []
     
-    init(playerName: String, startingStack: Double = 10000) {
+    var isInHand: Bool = true
+    
+    var isAllIn: Bool = false
+    var isActingPlayer: Bool = false
+    var isYetToAct: Bool = true
+    
+    var chipsInpot: Double = 0
+    
+    
+    
+    
+    
+    
+    
+    init(playerName: String, startingStack: Double = 10000, atSeat: Int) {
         name = playerName
         stack = startingStack
+        seat = atSeat
     }
     
     private func bestHand(_ cards: [Card]) -> Hand {

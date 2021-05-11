@@ -140,7 +140,7 @@ struct TexasHoldEm {
         nextPlayer()
     }
     
-    mutating func fold(_ player: Player) {
+    mutating func fold(_ player: inout Player) {
         if let i = playersInHand.firstIndex(where: {$0.name == player.name}) {
             playersInHand.remove(at: i)
             if let hangingBet = roundTracker[i] {
@@ -148,7 +148,7 @@ struct TexasHoldEm {
             }
             roundTracker.remove(at: i)
         }
-        player.cards = [Card]()
+        player.holeCards = [Card]()
         nextPlayer()
     }
     
@@ -175,7 +175,7 @@ struct TexasHoldEm {
             settleHand()
             return
         }
-        for player in players {
+        for var player in players {
             if player.stack <= 0 {
                 for i in 0..<players.count {
                     if players[i].name == player.name {
@@ -183,7 +183,7 @@ struct TexasHoldEm {
                     }
                 }
             }
-            player.cards = [Card]()
+            player.holeCards = [Card]()
         }
         actionOnPlayer = playersInHand.index(after: buttonOnPlayer)
     }
@@ -196,9 +196,9 @@ struct TexasHoldEm {
     
     private mutating func settleHand() {
         showdown()
-        let split = pot / playersInHand.count
+        let split = pot / Double(playersInHand.count)
         
-        for player in playersInHand {
+        for var player in playersInHand {
             player.stack += split
             pot -= split
         }
