@@ -8,6 +8,16 @@
 import Foundation
 
 struct TexasHoldEm {
+    //MARK: - Types -
+    enum BettingRound: Int {
+        case preflop = 0
+        case postflop = 1
+        case turn = 2
+        case river = 3
+    }
+    
+    
+    //MARK: - Properties -
     //objects
     var players: [Player]
     var deck: Deck
@@ -17,16 +27,16 @@ struct TexasHoldEm {
     
     //stakes
     var minimumBet: Double
+    var bigBlind: Double
     var smallBlind: Double {
         return minimumBet * 0.5
     }
     var ante: Double?
     
     //tracking gameplay
-    
-    var actionOnPlayer: Player
     var currentBet: Double = 0
     var playersInHand: [Player]
+    var bettingRound: Int = 0
     
     
     
@@ -43,14 +53,93 @@ struct TexasHoldEm {
         players = seatedPlayers
         playersInHand = seatedPlayers.filter( {$0.isInHand} )
         deck = newDeck
+        bigBlind = blinds
         minimumBet = blinds
-        actionOnPlayer = seatedPlayers[button + 3]
     }
     
     
     // MARK: - Bookkeeping Functions -
+    //TODO: - Hand Begin -
+    //pay blinds
+    //deal cards
+    //set player to act
     
+    private mutating func dealStartingHands() {
+        var notFinished = true
+        while notFinished {
+            notFinished = false
+            for i in button + 1..<players.count {
+                if players[i].isInHand {
+                    if players[i].holeCardCount < 2 {
+                        if let card = deck.deal() {
+                            players[i].dealHoleCard(card)
+                        }
+                        notFinished = true
+                    }
+                }
+            }
+            for i in 0..<button + 1 {
+                if players[i].isInHand {
+                    if players[i].holeCardCount < 2 {
+                        if let card = deck.deal() {
+                            players[i].dealHoleCard(card)
+                        }
+                        notFinished = true
+                    }
+                }
+            }
+        }
+    }
     
+    private mutating func payBlinds() {
+        switch button + 1 > players.count - 1 {
+        case true:
+            players[0].chipsToPot(smallBlind)
+            players[1].chipsToPot(bigBlind)
+        case false:
+            switch button + 2 > players.count - 1 {
+            case true:
+                players[button + 1].chipsToPot(smallBlind)
+                players[0].chipsToPot(bigBlind)
+            case false:
+                players[button + 1].chipsToPot(smallBlind)
+                players[button + 2].chipsToPot(bigBlind)
+            }
+        }
+    }
+    
+    private func checkRoundIsOver() -> Bool {
+        let remaining = players.filter({$0.isInHand})
+        if remaining.count < 2 { return true }
+        for player in remaining {
+            if player.isYetToAct { return false }
+        }
+        return true
+    }
+    
+    private mutating func findNextToAct() {
+        let remaining = players.filter({$0.isInHand && $0.isYetToAct}).sorted(by: {$0.seat < $1.seat})
+        let currentRound = BettingRound(rawValue: bettingRound)
+        
+        switch currentRound {
+        case .preflop:
+            if button == remaining.last?.seat {
+                if players[button + 1]
+                let nextID = remaining.first?.id
+                let nextIndex = players.first(where: {player in
+                    player.id == nextID
+                })
+                players[nextIndex].isActingPlayer == true
+                return
+            } else {
+                for i in button + 3..<remaining.count {
+                    
+                }
+            }
+        default:
+            <#code#>
+        }
+    }
     
     
     // MARK: - HAND EVALUATION FUNCTIONS -

@@ -15,7 +15,8 @@ struct Player {
     public var id: UUID
     
     // Card/Hand properties
-    private(set) var holeCards: [Card] = []
+    var holeCardCount: Int { return holeCards.count }
+    private var holeCards: [Card] = []
     private(set) var communityCards: [Card] = []
     private var cards: [Card] {
         return holeCards + communityCards
