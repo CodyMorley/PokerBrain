@@ -7,14 +7,18 @@
 
 import Foundation
 
-enum Suit: Int, CaseIterable {
+enum Suit: Int, CaseIterable, Equatable {
     case hearts = 1
     case diamonds = 2
     case clubs = 3
     case spades = 4
+    
+    static func == (_ lhs: Suit, _ rhs: Suit) -> Bool {
+        return lhs.rawValue == rhs.rawValue
+    }
 }
 
-enum Rank: Int, CaseIterable {
+enum Rank: Int, CaseIterable, Comparable, Equatable {
     case two = 2
     case three = 3
     case four = 4
@@ -28,9 +32,21 @@ enum Rank: Int, CaseIterable {
     case queen = 12
     case king = 13
     case ace = 14
+    
+    static func < (_ lhs: Rank, _ rhs: Rank) -> Bool {
+        return lhs.rawValue < rhs.rawValue
+    }
+    
+    static func > (_ lhs: Rank, _ rhs: Rank) -> Bool {
+        return lhs.rawValue > rhs.rawValue
+    }
+    
+    static func == (_ lhs: Rank, _ rhs: Rank) -> Bool {
+        return lhs.rawValue == rhs.rawValue
+    }
 }
 
-enum HandStrength: Int {
+enum HandStrength: Int, Comparable, Equatable {
     case highCard = 0
     case pair = 1
     case twoPair = 2
@@ -40,6 +56,18 @@ enum HandStrength: Int {
     case fullHouse = 6
     case fourOfAKind = 7
     case straightFlush = 8
+    
+    static func < (_ lhs: HandStrength, _ rhs: HandStrength) -> Bool {
+        return lhs.rawValue < rhs.rawValue
+    }
+    
+    static func > (_ lhs: HandStrength, _ rhs: HandStrength) -> Bool {
+        return lhs.rawValue > rhs.rawValue
+    }
+    
+    static func == (_ lhs: HandStrength, _ rhs: HandStrength) -> Bool {
+        return lhs.rawValue == rhs.rawValue
+    }
 }
 
 enum PlayerAction {

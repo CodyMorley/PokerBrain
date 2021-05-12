@@ -11,6 +11,7 @@ struct TexasHoldEm {
     //objects
     var players: [Player]
     var deck: Deck
+    var button: Int = 0
     var pot: Double = 0
     var communityCards: [Card] = []
     
@@ -20,200 +21,68 @@ struct TexasHoldEm {
         return minimumBet * 0.5
     }
     var ante: Double?
+    
     //tracking gameplay
-    var buttonOnPlayer: Int! {
-        for i in 0..<players.count {
-            if players[i].hasButton {
-                return i
-            } else {
-                return 0
-            }
-        }
-    }
-    var payingSmallBlind: Int { return buttonOnPlayer + 1 }
-    var payingBigBlind: Int { return buttonOnPlayer + 2 }
-    var actionOnPlayer: Int
+    
+    var actionOnPlayer: Player
     var currentBet: Double = 0
     var playersInHand: [Player]
-    var roundTracker: [Double?]
     
     
     
     init(startingPlayers: [Player], blinds: Double = 100, newDeck: Deck = Deck()) {
         guard startingPlayers.count > 1 else { fatalError("Not enough players to start a new game.") }
         guard startingPlayers.count < 11 else { fatalError("Too many players for table.") }
-        func setButton() -> Int {
-            return Int.random(in: 0..<startingPlayers.count)
+        var unseatedPlayers = startingPlayers
+        for i in 0..<unseatedPlayers.count {
+            unseatedPlayers[i].seat = i
         }
-        var tracker = [Double?]()
-        for _ in startingPlayers {
-            tracker.append(nil)
-        }
+        let seatedPlayers = unseatedPlayers.sorted(by: {$0.seat < $1.seat})
         
-        players = startingPlayers
-        playersInHand = startingPlayers
+        
+        players = seatedPlayers
+        playersInHand = seatedPlayers.filter( {$0.isInHand} )
         deck = newDeck
         minimumBet = blinds
-        buttonOnPlayer = setButton()
-        actionOnPlayer = buttonOnPlayer + 3
-        roundTracker = tracker
+        actionOnPlayer = seatedPlayers[button + 3]
     }
     
     
-    mutating func shuffleUpAndDeal() {
-        deck.shuffle()
-        deck.shuffle()
-        //TODO
-        //pay small blind
-        //pay big blind
-        //deal cards
-        //set action on player
-    }
-    
-    private mutating func dealFlop() {
-        deck.deal()
-        card1 = deck.deal()
-        card2 = deck.deal()
-        card3 = deck.deal()
-    }
-    
-    private mutating func dealTurn() {
-        deck.deal()
-        card4 = deck.deal()
-    }
-    
-    private mutating func dealRiver() {
-        deck.deal()
-        card5 = deck.deal()
-    }
-    
-    mutating func check() {
-        nextPlayer()
-    }
-    
-    mutating func call(_ player: inout Player, for amount: Double) {
-        if let i = playersInHand.firstIndex(where: {$0.name == player.name}) {
-            if amount >= player.stack {
-                if roundTracker[i] == nil {
-                    roundTracker[i] = player.stack
-                    player.stack = 0
-                } else {
-                    if var bet = roundTracker[i] {
-                        bet += player.stack
-                        roundTracker[i] = bet
-                        player.stack = 0
-                    }
-                }
-            } else {
-                if roundTracker[i] == nil {
-                    roundTracker[i] = amount
-                    player.stack -= amount
-                } else {
-                    if var bet = roundTracker[i] {
-                        bet += amount
-                        roundTracker[i] = bet
-                        player.stack -= amount
+    private mutating func showdown(_ players: [Player]) -> [Player] {
+        guard players.count != 1 else {
+            return hands
+        }
+        
+        var best: HandStrength = .highCard
+        for player in players {
+            if let playerHand = player.hand.handStrength, playerHand > best {
+                best = playerHand
+            }
+        }
+        
+        var bestHands = players.filter( {$0.hand?.handStrength == best} )
+        if bestHands.count == 1 { return bestHands }
+        
+        for firstPlayer in bestHands {
+            for secondPlayer in bestHands {
+                if firstPlayer.id == secondPlayer.id { continue }
+                let firstIndex = bestHands.firstIndex(of: firstPlayer)
+                
+                
+                if let hand1 = firstPlayer.hand, let hand2 = secondPlayer.hand {
+                    if let result = evaluate(hand1, vs: hand2) {
+                        switch result {
+                        case true:
+                            bestHands.remove
+                        default:
+                            <#code#>
+                        }
                     }
                 }
             }
         }
-        nextPlayer()
-    }
-    
-    mutating func bet(_ player: inout Player, of amount: Double) {
-        guard amount <= player.stack, amount >= minimumBet else { return }
         
-        player.stack -= amount
-        minimumBet = amount
-        currentBet = amount
-        if let i = playersInHand.firstIndex(where: {$0.name == player.name}) {
-            roundTracker[i] = amount
-        }
-        nextPlayer()
     }
-    
-    mutating func raise(_ player: inout Player, by amount: Double) {
-        guard amount <= player.stack, amount >= minimumBet else { return }
-        
-        player.stack -= amount
-        minimumBet += amount
-        currentBet += amount
-        if let i = playersInHand.firstIndex(where: {$0.name == player.name}) {
-            roundTracker[i] = currentBet
-        }
-        nextPlayer()
-    }
-    
-    mutating func fold(_ player: inout Player) {
-        if let i = playersInHand.firstIndex(where: {$0.name == player.name}) {
-            playersInHand.remove(at: i)
-            if let hangingBet = roundTracker[i] {
-                pot += hangingBet
-            }
-            roundTracker.remove(at: i)
-        }
-        player.holeCards = [Card]()
-        nextPlayer()
-    }
-    
-    private mutating func nextPlayer() {
-        if playersInHand.count == 1 {
-            settleHand()
-            settleRound()
-        }
-        if actionOnPlayer + 1 > playersInHand.count {
-            actionOnPlayer = 0
-        } else {
-            actionOnPlayer += 1
-        }
-    }
-    
-    private mutating func settleRound() {
-        for i in 0..<roundTracker.count {
-            if let roundBet = roundTracker[i] {
-                pot += roundBet
-            }
-            roundTracker[i] = nil
-        }
-        if playersInHand.count == 1 {
-            settleHand()
-            return
-        }
-        for var player in players {
-            if player.stack <= 0 {
-                for i in 0..<players.count {
-                    if players[i].name == player.name {
-                        players.remove(at: i)
-                    }
-                }
-            }
-            player.holeCards = [Card]()
-        }
-        actionOnPlayer = playersInHand.index(after: buttonOnPlayer)
-    }
-    
-    private mutating func showdown() {
-        //TODO
-        //compare all reamining hands to find best hand
-        //when one hand remains settle hand
-    }
-    
-    private mutating func settleHand() {
-        showdown()
-        let split = pot / Double(playersInHand.count)
-        
-        for var player in playersInHand {
-            player.stack += split
-            pot -= split
-        }
-        
-        buttonOnPlayer += 1
-        
-        if players.count > 1 {
-            shuffleUpAndDeal()
-        }
-    }
-    
     
     // MARK: - HAND EVALUATION FUNCTIONS -
     private func evaluate(_ hand1: Hand, vs hand2: Hand) -> Bool? {

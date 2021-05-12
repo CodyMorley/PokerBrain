@@ -12,6 +12,7 @@ struct Player {
     // Identifier properties
     public var name: String
     public var seat: Int
+    public var id: UUID
     
     // Card/Hand properties
     private(set) var holeCards: [Card] = []
@@ -29,7 +30,6 @@ struct Player {
     // Bookkeeping properties
     var chipCount: Double { return stack }
     private var stack: Double
-    var hasButton: Bool = false
     var isActingPlayer: Bool = false
     private(set) var isSittingOut = false
     private(set) var isYetToAct: Bool = true
@@ -40,10 +40,11 @@ struct Player {
     
     
     //MARK: - Initializer -
-    init(playerName: String, startingStack: Double = 10000, atSeat: Int) {
+    init(playerName: String, playerID: UUID = UUID(), startingStack: Double = 10000, atSeat: Int) {
         name = playerName
         stack = startingStack
         seat = atSeat
+        id = playerID
     }
     
     //MARK: - Private Functions -
@@ -196,5 +197,12 @@ struct Player {
     public mutating func sitIn() {
         isSittingOut = false
     }
-    
 }
+
+extension Player: Equatable {
+    static func == (_ lhs: Player, _ rhs: Player) -> Bool {
+        return lhs.id == rhs.id
+    }
+}
+
+
