@@ -48,14 +48,20 @@ struct TexasHoldEm {
     }
     
     
+    // MARK: - Bookkeeping Functions -
+    
+    
+    
+    
+    // MARK: - HAND EVALUATION FUNCTIONS -
     private mutating func showdown(_ players: [Player]) -> [Player] {
         guard players.count != 1 else {
-            return hands
+            return players
         }
         
         var best: HandStrength = .highCard
         for player in players {
-            if let playerHand = player.hand.handStrength, playerHand > best {
+            if let playerHand = player.hand?.handStrength, playerHand > best {
                 best = playerHand
             }
         }
@@ -64,27 +70,29 @@ struct TexasHoldEm {
         if bestHands.count == 1 { return bestHands }
         
         for firstPlayer in bestHands {
+            if bestHands.count == 1 { return bestHands }
             for secondPlayer in bestHands {
                 if firstPlayer.id == secondPlayer.id { continue }
-                let firstIndex = bestHands.firstIndex(of: firstPlayer)
                 
-                
-                if let hand1 = firstPlayer.hand, let hand2 = secondPlayer.hand {
-                    if let result = evaluate(hand1, vs: hand2) {
-                        switch result {
-                        case true:
-                            bestHands.remove
-                        default:
-                            <#code#>
-                        }
+                if let firstIndex = bestHands.firstIndex(of: firstPlayer),
+                   let secondIndex = bestHands.firstIndex(of: secondPlayer),
+                   let hand1 = firstPlayer.hand,
+                   let hand2 = secondPlayer.hand,
+                   let result = evaluate(hand1, vs: hand2) {
+                    switch result {
+                    case true:
+                        bestHands.remove(at: secondIndex)
+                    case false:
+                        bestHands.remove(at: firstIndex)
                     }
                 }
             }
         }
-        
+        return bestHands
     }
     
-    // MARK: - HAND EVALUATION FUNCTIONS -
+    
+    
     private func evaluate(_ hand1: Hand, vs hand2: Hand) -> Bool? {
         if hand1.handStrength.rawValue > hand2.handStrength.rawValue {
             return true
@@ -134,7 +142,6 @@ struct TexasHoldEm {
     }
     
     
-    // Same hand comparison logic
     private func bothHighCard(_ hand1: Hand, vs hand2: Hand) -> Bool? {
         guard hand1.handStrength == .highCard, hand2.handStrength == .highCard else { fatalError("Tried to pass dissimilar hands for close comparison: High Card. Hand1: \(String(describing: hand1.handStrength)) Hand2: \(String(describing: hand2.handStrength))") }
         
@@ -275,7 +282,8 @@ struct TexasHoldEm {
             }
         }
         for i in 1...3 {
-            if sorted2[i].rank.rawValue == sorted2[i - 1].rank.rawValue && sorted2[i].rank.rawValue == sorted2[i + 1].rank.rawValue {
+            if sorted2[i].rank.rawValue == sorted2[i - 1].rank.rawValue &&
+                sorted2[i].rank.rawValue == sorted2[i + 1].rank.rawValue {
                 trips2 = sorted2[i].rank
                 for j in 0..<sorted2.count {
                     if sorted2[j].rank != sorted2[i].rank {
