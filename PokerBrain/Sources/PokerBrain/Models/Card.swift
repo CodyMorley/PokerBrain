@@ -60,5 +60,4 @@ struct Card: Equatable {
         
         return formattedCard
     }
-    
 }

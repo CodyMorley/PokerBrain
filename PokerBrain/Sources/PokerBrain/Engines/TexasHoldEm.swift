@@ -22,7 +22,7 @@ struct TexasHoldEm {
     var players: [Player]
     var deck: Deck
     var button: Int = 0
-    var pot: Double = 0
+    var pot: Pot
     var communityCards: [Card] = []
     
     //stakes
@@ -37,10 +37,11 @@ struct TexasHoldEm {
     var currentBet: Double = 0
     var playersInHand: [Player]
     var bettingRound: Int = 0
+    private(set) var lastToAct: Int = 0
     
     
     
-    init(startingPlayers: [Player], blinds: Double = 100, newDeck: Deck = Deck()) {
+    init(startingPlayers: [Player], blinds: Double = 100) {
         guard startingPlayers.count > 1 else { fatalError("Not enough players to start a new game.") }
         guard startingPlayers.count < 11 else { fatalError("Too many players for table.") }
         var unseatedPlayers = startingPlayers
@@ -52,7 +53,8 @@ struct TexasHoldEm {
         
         players = seatedPlayers
         playersInHand = seatedPlayers.filter( {$0.isInHand} )
-        deck = newDeck
+        deck = Deck()
+        pot = Pot()
         bigBlind = blinds
         minimumBet = blinds
     }
@@ -96,14 +98,17 @@ struct TexasHoldEm {
         case true:
             players[0].chipsToPot(smallBlind)
             players[1].chipsToPot(bigBlind)
+            lastToAct = players[1].seat
         case false:
             switch button + 2 > players.count - 1 {
             case true:
                 players[button + 1].chipsToPot(smallBlind)
                 players[0].chipsToPot(bigBlind)
+                lastToAct = players[0].seat
             case false:
                 players[button + 1].chipsToPot(smallBlind)
                 players[button + 2].chipsToPot(bigBlind)
+                lastToAct = players[button + 2].seat
             }
         }
     }
@@ -119,25 +124,20 @@ struct TexasHoldEm {
     
     private mutating func findNextToAct() {
         let remaining = players.filter({$0.isInHand && $0.isYetToAct}).sorted(by: {$0.seat < $1.seat})
-        let currentRound = BettingRound(rawValue: bettingRound)
+        guard remaining.count > 1 else { return }
         
-        switch currentRound {
-        case .preflop:
-            if button == remaining.last?.seat {
-                if players[button + 1]
-                let nextID = remaining.first?.id
-                let nextIndex = players.first(where: {player in
-                    player.id == nextID
-                })
-                players[nextIndex].isActingPlayer == true
-                return
-            } else {
-                for i in button + 3..<remaining.count {
-                    
+        for player in remaining {
+            if player.seat > lastToAct {
+                if let i = players.firstIndex(of: player) {
+                    players[i].isActingPlayer = true
+                    return
                 }
             }
-        default:
-            <#code#>
+        }
+        
+        if let i = players.firstIndex(of: remaining[0]) {
+            players[i].isActingPlayer = true
+            return
         }
     }
     
