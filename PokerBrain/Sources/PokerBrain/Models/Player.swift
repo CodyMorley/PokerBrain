@@ -8,6 +8,13 @@
 import Foundation
 
 struct Player {
+    //MARK: - Types -
+    enum NotificationKeys: String {
+        case playerDidCheck = "playerDidCheck"
+        case playerDidCall = "playerDidCall"
+        case playerDidRaise = "playerDidRaise"
+        case playerDidFold = "playerDidFold"
+    }
     //MARK: - Properties -
     // Identifier properties
     public var name: String
@@ -98,14 +105,32 @@ struct Player {
     
     private func playerDidTakeAction(_ action: PlayerAction) {
         // TODO use publisher to describe action to subscriber (table)
+        var userInfo: [UUID : PlayerAction] = [:]
+        switch action {
+        case .check:
+            userInfo[id] = .check
+            NotificationCenter.default.post(name: .playerDidCheck, object: nil, userInfo: userInfo)
+        case let .call(amount):
+            userInfo[id] = .call(amount)
+            NotificationCenter.default.post(name: .playerDidCall, object: nil, userInfo: userInfo)
+        case let .raise(amount):
+            userInfo[id] = .raise(amount)
+            NotificationCenter.default.post(name: .playerDidRaise, object: nil, userInfo: userInfo)
+        case .fold:
+            userInfo[id] = .fold
+            NotificationCenter.default.post(name: .playerDidCheck, object: nil, userInfo: userInfo)
+        }
+    }
+    
+    public mutating func actionWasSuccessfull() {
+        isActingPlayer = false
+        isYetToAct = false
     }
     
     private mutating func dropFromHand() {
         chipsInPot += betThisRound
         betThisRound = 0
-        isYetToAct = false
         isInHand = false
-        isActingPlayer = false
     }
     
     private mutating func settleRound() {
@@ -163,32 +188,23 @@ struct Player {
     
     //MARK: - Player Actions -
     public func check() {
-        // TODO
-        //guard player is active player else return
-        //set yet to act to false
-        //send player action (will set active player to false)
+        guard isActingPlayer else { return }
+        playerDidTakeAction(.check)
     }
     
     public func call(_ amount: Double) {
-        // TODO
-        //guard player is active player else return
-        //set yet to act to false
-        //send player action (will call back to chips to pot
+        guard isActingPlayer else { return }
+        playerDidTakeAction(.call(amount))
     }
     
     public func raise(_ amount: Double) {
-        // TODO
-        //guard player is active player else return
-        //set yet to act to false
-        //call chips to pot from player
-        //send player action (will call back to chips to pot)
+        guard isActingPlayer else { return }
+        playerDidTakeAction(.raise(amount))
     }
     
     public func fold(_ amount: Double) {
-        // TODO
-        //guard player is active player else return
-        //set yet to act to false
-        //send player action (will call back to drop player)
+        guard isActingPlayer else { return }
+        playerDidTakeAction(.fold)
     }
     
     public mutating func sitOut() {
@@ -206,4 +222,10 @@ extension Player: Equatable {
     }
 }
 
+extension Notification.Name {
+    static let playerDidCheck: Notification.Name = Notification.Name(Player.NotificationKeys.playerDidCheck.rawValue)
+    static let playerDidCall: Notification.Name = Notification.Name(Player.NotificationKeys.playerDidCall.rawValue)
+    static let playerDidRaise: Notification.Name = Notification.Name(Player.NotificationKeys.playerDidRaise.rawValue)
+    static let playerDidFold: Notification.Name = Notification.Name(Player.NotificationKeys.playerDidFold.rawValue)
+}
 
